@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - Phishing URL Scanner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-1: #0f172a;
+            --bg-2: #1d3557;
+            --bg-3: #2a9d8f;
+            --surface: rgba(255, 255, 255, 0.94);
+            --border: rgba(15, 23, 42, 0.1);
+            --text: #0f172a;
+            --muted: #4b5563;
+            --primary: #0f766e;
+            --primary-2: #0891b2;
+            --warning-bg: #fff7ed;
+            --warning-border: #fdba74;
+            --warning-text: #9a3412;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at 12% 18%, rgba(8, 145, 178, 0.32), transparent 35%),
+                radial-gradient(circle at 86% 14%, rgba(42, 157, 143, 0.35), transparent 34%),
+                linear-gradient(140deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 24px;
+            color: var(--text);
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 18px;
+            box-shadow: 0 20px 58px rgba(2, 6, 23, 0.3);
+            padding: 28px;
+            animation: card-enter 440ms ease-out;
+        }
+
+        @keyframes card-enter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            margin: 0 0 8px;
+            font-size: 1.65rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            margin: 0 0 16px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .error {
+            display: none;
+            margin-bottom: 12px;
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            color: var(--warning-text);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.92rem;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .field {
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid rgba(15, 23, 42, 0.16);
+            border-radius: 10px;
+            font-size: 0.98rem;
+            font-family: inherit;
+            background: #fff;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-2);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.16);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 14px;
+            margin-top: 6px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.98rem;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(8, 145, 178, 0.35);
+        }
+
+        button:active {
+            transform: scale(0.99);
+        }
+
+        .footer {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 0.93rem;
+        }
+
+        a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 22px;
+                border-radius: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Sign Up</h2>
+        <p class="subtitle">Create your account to start scanning URLs</p>
+        <div id="error" class="error"></div>
+        <div class="field">
+            <input type="text" id="username" placeholder="Choose username" />
+        </div>
+        <div class="field">
+            <input type="password" id="password" placeholder="Choose password" />
+        </div>
+        <button id="signupBtn">Create Account</button>
+        <p class="footer">Already have an account? <a href="login.html">Log in</a></p>
+    </div>
+    <script>
+        document.getElementById('signupBtn').addEventListener('click', async () => {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            const err = document.getElementById('error');
+            err.textContent = '';
+            err.classList.remove('show');
+            if (!user || !pass) {
+                err.textContent = 'Username and password required';
+                err.classList.add('show');
+                return;
+            }
+            try {
+                const res = await fetch('http://localhost:8000/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: user, password: pass})
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    err.textContent = data.detail || 'Sign up failed';
+                    err.classList.add('show');
+                    return;
+                }
+                // redirect to login after success
+                window.location.replace('login.html');
+            } catch (e) {
+                err.textContent = 'Unable to reach server';
+                err.classList.add('show');
+            }
+        });
+
+        ['username', 'password'].forEach((id) => {
+            document.getElementById(id).addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('signupBtn').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

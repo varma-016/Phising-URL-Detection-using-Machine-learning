@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Phishing URL Scanner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-1: #0f172a;
+            --bg-2: #1d3557;
+            --bg-3: #2a9d8f;
+            --surface: rgba(255, 255, 255, 0.94);
+            --border: rgba(15, 23, 42, 0.1);
+            --text: #0f172a;
+            --muted: #4b5563;
+            --primary: #0f766e;
+            --primary-2: #0891b2;
+            --warning-bg: #fff7ed;
+            --warning-border: #fdba74;
+            --warning-text: #9a3412;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at 12% 18%, rgba(8, 145, 178, 0.32), transparent 35%),
+                radial-gradient(circle at 86% 14%, rgba(42, 157, 143, 0.35), transparent 34%),
+                linear-gradient(140deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 24px;
+            color: var(--text);
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 18px;
+            box-shadow: 0 20px 58px rgba(2, 6, 23, 0.3);
+            padding: 28px;
+            animation: card-enter 440ms ease-out;
+        }
+
+        @keyframes card-enter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            margin: 0 0 8px;
+            font-size: 1.65rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            margin: 0 0 16px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .error {
+            display: none;
+            margin-bottom: 12px;
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            color: var(--warning-text);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.92rem;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .error.success {
+            background: #f0fdf4;
+            border-color: #86efac;
+            color: #14532d;
+        }
+
+        .field {
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid rgba(15, 23, 42, 0.16);
+            border-radius: 10px;
+            font-size: 0.98rem;
+            font-family: inherit;
+            background: #fff;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-2);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.16);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 14px;
+            margin-top: 6px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.98rem;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(8, 145, 178, 0.35);
+        }
+
+        button:active {
+            transform: scale(0.99);
+        }
+
+        .footer {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 0.93rem;
+        }
+
+        .helper-row {
+            margin-top: 8px;
+            margin-bottom: 2px;
+            text-align: right;
+        }
+
+        .text-link {
+            border: none;
+            background: transparent;
+            color: var(--primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .text-link:hover {
+            text-decoration: underline;
+        }
+
+        a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 22px;
+                border-radius: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Login</h2>
+        <p class="subtitle">Access your phishing scanner dashboard</p>
+        <div id="error" class="error"></div>
+        <div class="field">
+            <input type="text" id="username" placeholder="Username" />
+        </div>
+        <div class="field">
+            <input type="password" id="password" placeholder="Password" />
+        </div>
+        <div class="helper-row">
+            <button type="button" id="forgotBtn" class="text-link">Forgot password?</button>
+        </div>
+        <button id="loginBtn">Log In</button>
+        <p class="footer">Don't have an account? <a href="signup.html">Sign up</a></p>
+    </div>
+    <script>
+        function showMessage(text, isSuccess = false) {
+            const err = document.getElementById('error');
+            err.textContent = text;
+            err.classList.remove('success');
+            if (isSuccess) {
+                err.classList.add('success');
+            }
+            err.classList.add('show');
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            const err = document.getElementById('error');
+            err.textContent = '';
+            err.classList.remove('show');
+            err.classList.remove('success');
+            if (!user || !pass) {
+                showMessage('Username and password required');
+                return;
+            }
+            try {
+                const res = await fetch('http://localhost:8000/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: user, password: pass})
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    showMessage(data.detail || 'Login failed');
+                    return;
+                }
+                // success
+                localStorage.setItem('username', user);
+                window.location.replace('scanner.html');
+            } catch (e) {
+                showMessage('Unable to reach server');
+            }
+        });
+
+        document.getElementById('forgotBtn').addEventListener('click', async () => {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                showMessage('Enter your username first, then click Forgot password.');
+                return;
+            }
+
+            try {
+                const res = await fetch('http://localhost:8000/forgot-password', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username})
+                });
+
+                let data = {};
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    data = {};
+                }
+
+                if (!res.ok) {
+                    showMessage(data.detail || 'Could not process password reset request.');
+                    return;
+                }
+
+                showMessage(data.message || 'If this account exists, a password reset message has been sent.', true);
+            } catch (e) {
+                showMessage('Unable to reach server');
+            }
+        });
+
+        ['username', 'password'].forEach((id) => {
+            document.getElementById(id).addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('loginBtn').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

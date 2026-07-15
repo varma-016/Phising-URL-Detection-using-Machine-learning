@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing URL Detection Scanner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-1: #0f172a;
+            --bg-2: #1d3557;
+            --bg-3: #2a9d8f;
+            --surface: rgba(255, 255, 255, 0.92);
+            --surface-soft: rgba(248, 250, 252, 0.86);
+            --border: rgba(15, 23, 42, 0.1);
+            --text: #0f172a;
+            --muted: #4b5563;
+            --primary: #0f766e;
+            --primary-2: #0891b2;
+            --danger: #b91c1c;
+            --danger-soft: #fef2f2;
+            --safe: #166534;
+            --safe-soft: #f0fdf4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at 12% 18%, rgba(8, 145, 178, 0.32), transparent 35%),
+                radial-gradient(circle at 86% 14%, rgba(42, 157, 143, 0.35), transparent 34%),
+                linear-gradient(140deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 34px 20px;
+            color: var(--text);
+        }
+        
+        .container {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            box-shadow: 0 20px 58px rgba(2, 6, 23, 0.3);
+            max-width: 980px;
+            width: 100%;
+            padding: 34px;
+            animation: page-enter 480ms ease-out;
+        }
+
+        @keyframes page-enter {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            padding-bottom: 20px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .user-chip {
+            font-size: 0.88em;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 999px;
+            padding: 8px 12px;
+        }
+
+        .logout-link {
+            text-decoration: none;
+            font-size: 0.86em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--primary);
+            padding: 8px 12px;
+            border: 1px solid rgba(15, 118, 110, 0.28);
+            border-radius: 999px;
+            transition: all 0.2s ease;
+        }
+
+        .logout-link:hover {
+            background: rgba(15, 118, 110, 0.09);
+            color: #0f4f4b;
+        }
+        
+        .header h1 {
+            color: var(--text);
+            font-size: clamp(1.8rem, 4vw, 2.35rem);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p {
+            color: var(--muted);
+            font-size: 1em;
+        }
+        
+        .scanner-section {
+            margin-bottom: 28px;
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .form-group input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 1px solid rgba(15, 23, 42, 0.16);
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            background: #fff;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-2);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.16);
+        }
+        
+        .form-group button {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-weight: 700;
+            min-width: 118px;
+        }
+        
+        .form-group button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(8, 145, 178, 0.35);
+        }
+        
+        .form-group button:active {
+            transform: scale(0.98) translateY(0);
+        }
+        
+        .options {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .option-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        
+        .option-group label {
+            color: var(--muted);
+            font-weight: 600;
+        }
+        
+        .option-group select {
+            padding: 8px 10px;
+            border: 1px solid rgba(15, 23, 42, 0.16);
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: #fff;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            border: 1px solid transparent;
+        }
+        
+        .result.show {
+            display: block;
+            animation: fade-slide 240ms ease-out;
+        }
+
+        @keyframes fade-slide {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result.phishing {
+            background: var(--danger-soft);
+            border-color: rgba(185, 28, 28, 0.2);
+            border-left: 5px solid var(--danger);
+        }
+        
+        .result.legitimate {
+            background: var(--safe-soft);
+            border-color: rgba(22, 101, 52, 0.2);
+            border-left: 5px solid var(--safe);
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 16px;
+        }
+        
+        .result-icon {
+            font-size: 2.15em;
+        }
+        
+        .result-text h2 {
+            margin-bottom: 5px;
+        }
+        
+        .result.phishing .result-text h2 {
+            color: var(--danger);
+        }
+        
+        .result.legitimate .result-text h2 {
+            color: var(--safe);
+        }
+        
+        .result-text p {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+        
+        .result-details {
+            background: rgba(255, 255, 255, 0.78);
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            gap: 14px;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .detail-value {
+            color: var(--muted);
+            text-align: right;
+            word-break: break-all;
+        }
+        
+        .confidence-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(148, 163, 184, 0.32);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-2));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            font-weight: 700;
+        }
+        
+        .features {
+            background: rgba(255, 255, 255, 0.78);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-top: 15px;
+        }
+
+        .trust-panel {
+            display: none;
+            margin-top: 14px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .trust-panel.show {
+            display: block;
+            animation: fade-slide 240ms ease-out;
+        }
+
+        .trust-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .trust-head h3 {
+            margin: 0;
+            color: var(--text);
+            font-size: 1em;
+        }
+
+        .trust-score {
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.85em;
+            font-weight: 700;
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .trust-score.high {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .trust-score.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .trust-score.low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .trust-summary {
+            color: var(--muted);
+            font-size: 0.9em;
+            margin-bottom: 12px;
+        }
+
+        .trust-factors {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .factor-row {
+            display: grid;
+            grid-template-columns: minmax(110px, 180px) 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .factor-label {
+            color: var(--text);
+            font-size: 0.87em;
+            font-weight: 600;
+        }
+
+        .factor-track {
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.28);
+            overflow: hidden;
+        }
+
+        .factor-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            transition: width 0.35s ease;
+            background: linear-gradient(90deg, #16a34a 0%, #f59e0b 60%, #dc2626 100%);
+        }
+
+        .factor-value {
+            color: var(--muted);
+            font-size: 0.83em;
+            min-width: 54px;
+            text-align: right;
+        }
+
+        .top-reasons {
+            border-top: 1px dashed rgba(15, 23, 42, 0.16);
+            padding-top: 8px;
+        }
+
+        .top-reasons h4 {
+            color: var(--text);
+            font-size: 0.9em;
+            margin-bottom: 6px;
+        }
+
+        .top-reasons ul {
+            padding-left: 18px;
+            color: var(--muted);
+            font-size: 0.86em;
+            line-height: 1.45;
+        }
+
+        .top-reasons li {
+            margin-bottom: 4px;
+        }
+
+        .features h3 {
+            margin-bottom: 10px;
+            color: var(--text);
+            font-size: 1em;
+        }
+        
+        .feature-list {
+            list-style: none;
+        }
+        
+        .feature-list li {
+            padding: 6px 0;
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+        
+        .feature-list li:before {
+            content: "• ";
+            margin-right: 8px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: var(--muted);
+        }
+        
+        .spinner {
+            border: 4px solid #f0f4f8;
+            border-top: 4px solid var(--primary-2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .history {
+            margin-top: 12px;
+            padding-top: 22px;
+            border-top: 1px solid rgba(15, 23, 42, 0.12);
+        }
+
+        .safety-guide {
+            margin-top: 6px;
+            margin-bottom: 24px;
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .safety-guide h2 {
+            color: var(--text);
+            font-size: 1.25em;
+            margin-bottom: 8px;
+        }
+
+        .safety-guide .guide-subtitle {
+            color: var(--muted);
+            font-size: 0.95em;
+            margin-bottom: 14px;
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 12px;
+        }
+
+        .guide-card {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .guide-card h3 {
+            color: var(--text);
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .guide-card ul {
+            padding-left: 18px;
+            color: var(--muted);
+            font-size: 0.92em;
+            line-height: 1.5;
+        }
+
+        .guide-card li {
+            margin-bottom: 6px;
+        }
+        
+        .history h2 {
+            color: var(--text);
+            margin-bottom: 14px;
+            font-size: 1.3em;
+        }
+        
+        .history-list {
+            list-style: none;
+        }
+        
+        .history-item {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.78);
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            border-left: 4px solid #94a3b8;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.25s ease;
+        }
+        
+        .history-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(8, 145, 178, 0.38);
+        }
+        
+        .history-item.phishing {
+            border-left-color: var(--danger);
+        }
+        
+        .history-item.legitimate {
+            border-left-color: var(--safe);
+        }
+        
+        .history-url {
+            font-weight: 500;
+            color: var(--text);
+            word-break: break-all;
+            margin-bottom: 5px;
+        }
+        
+        .history-meta {
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+        
+        .error {
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            color: #9a3412;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-top: 22px;
+            padding-top: 22px;
+            border-top: 1px solid rgba(15, 23, 42, 0.12);
+        }
+        
+        .stat-box {
+            background: linear-gradient(140deg, #083344 0%, #0f766e 55%, #0891b2 100%);
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 24px rgba(8, 51, 68, 0.28);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .attack-replay {
+            display: none;
+            margin-top: 18px;
+            margin-bottom: 22px;
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .attack-replay.show {
+            display: block;
+        }
+
+        .replay-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .replay-head h2 {
+            color: var(--text);
+            font-size: 1.2em;
+            margin-bottom: 4px;
+        }
+
+        .replay-head p {
+            color: var(--muted);
+            font-size: 0.93em;
+            max-width: 620px;
+        }
+
+        .risk-chip {
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 0.86em;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .risk-chip.high {
+            color: #991b1b;
+            background: #fee2e2;
+            border-color: #fecaca;
+        }
+
+        .risk-chip.low {
+            color: #14532d;
+            background: #dcfce7;
+            border-color: #bbf7d0;
+        }
+
+        .replay-track {
+            height: 9px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.32);
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .replay-track-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #16a34a 0%, #f59e0b 55%, #dc2626 100%);
+        }
+
+        .replay-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 10px;
+        }
+
+        .replay-step {
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 11px;
+            opacity: 0;
+            transform: translateY(8px);
+            animation: replay-step-in 0.35s ease forwards;
+        }
+
+        .replay-step h4 {
+            color: var(--text);
+            font-size: 0.95em;
+            margin-bottom: 6px;
+        }
+
+        .replay-step p {
+            color: var(--muted);
+            font-size: 0.9em;
+            line-height: 1.45;
+        }
+
+        .step-tag {
+            display: inline-block;
+            margin-bottom: 7px;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
+
+        .step-tag.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .step-tag.danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .step-tag.safe {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        @keyframes replay-step-in {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .scanner-section {
+                padding: 16px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .form-group {
+                flex-direction: column;
+            }
+            
+            .options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .result-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .detail-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // ensure user is authenticated before using scanner
+        const user = localStorage.getItem('username');
+        if (!user) {
+            window.location.replace('login.html');
+        }
+    </script>
+    <div class="container">
+        <div class="header">
+            <div class="topbar">
+                <div class="user-chip">Signed in as <span id="userDisplay"></span></div>
+                <a href="#" id="logoutLink" class="logout-link">Logout</a>
+            </div>
+            <h1>🔍 Phishing URL Detector</h1>
+            <p>Real-time detection of phishing and suspicious URLs</p>
+        </div>
+        
+        <div class="scanner-section">
+            <div class="options">
+                <div class="option-group">
+                    <label for="model-select">Detection Model:</label>
+                    <select id="model-select">
+                        <option value="ml">Machine Learning (Faster)</option>
+                        <option value="dl">Deep Learning (More Accurate)</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label for="recent-show-select">Show Recent:</label>
+                    <select id="recent-show-select">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="30" selected>30</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <input 
+                    type="text" 
+                    id="url-input" 
+                    placeholder="Enter URL to scan (e.g., https://example.com or example.com)" 
+                    autocomplete="off"
+                >
+                <button onclick="scanURL()">Scan</button>
+            </div>
+            
+            <div class="error" id="error-message"></div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing URL...</p>
+            </div>
+            
+            <div class="result" id="result">
+                <div class="result-header">
+                    <div class="result-icon" id="result-icon">🔍</div>
+                    <div class="result-text">
+                        <h2 id="result-status">Unknown</h2>
+                        <p id="result-description">Processing...</p>
+                    </div>
+                </div>
+                
+                <div class="result-details">
+                    <div class="detail-row">
+                        <span class="detail-label">URL:</span>
+                        <span class="detail-value" id="result-url">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Detection Result:</span>
+                        <span class="detail-value" id="result-prediction">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Model Used:</span>
+                        <span class="detail-value" id="result-model">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Confidence Score:</span>
+                        <span class="detail-value" id="result-confidence">-</span>
+                    </div>
+                </div>
+                
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidence-fill" style="width: 0%">
+                        <span id="confidence-text">0%</span>
+                    </div>
+                </div>
+                
+                <div class="features" id="features-section" style="display: none;">
+                    <h3>URL Characteristics:</h3>
+                    <ul class="feature-list" id="features-list"></ul>
+                </div>
+
+                <div class="trust-panel" id="trust-panel">
+                    <div class="trust-head">
+                        <h3>Trust Score Breakdown</h3>
+                        <span class="trust-score" id="trust-score">0 / 100</span>
+                    </div>
+                    <p class="trust-summary" id="trust-summary">This score explains why the URL is considered risky or safe.</p>
+                    <div class="trust-factors" id="trust-factors"></div>
+                    <div class="top-reasons">
+                        <h4>Top 3 Reasons</h4>
+                        <ul id="trust-reasons"></ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-box">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total Scans</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat-phishing">0</div>
+                <div class="stat-label">Phishing Detected</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat-legitimate">0</div>
+                <div class="stat-label">Legitimate</div>
+            </div>
+        </div>
+
+        <div class="attack-replay" id="attack-replay">
+            <div class="replay-head">
+                <div>
+                    <h2>Phishing Attack Replay</h2>
+                    <p id="replay-subtitle">Scan a URL to view how a phishing attack can evolve and what to do next.</p>
+                </div>
+                <div class="risk-chip low" id="replay-risk-chip">Risk Simulation: 0%</div>
+            </div>
+            <div class="replay-track">
+                <div class="replay-track-fill" id="replay-track-fill"></div>
+            </div>
+            <div class="replay-steps" id="replay-steps"></div>
+        </div>
+
+        <div class="safety-guide" id="safety-guide">
+            <h2>Phishing Safety Guide</h2>
+            <p class="guide-subtitle">If you click a phishing link, use these steps immediately to reduce risk and report the incident.</p>
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <h3>How To Recover Quickly</h3>
+                    <ul>
+                        <li>Disconnect from the suspicious site and close the page immediately.</li>
+                        <li>Change passwords for affected accounts first, then enable 2-factor authentication.</li>
+                        <li>Sign out from all active sessions in account security settings.</li>
+                        <li>Run a full anti-virus or anti-malware scan on your device.</li>
+                        <li>If banking details were shared, contact your bank and block cards right away.</li>
+                    </ul>
+                </div>
+                <div class="guide-card">
+                    <h3>How To Protect From Phishing</h3>
+                    <ul>
+                        <li>Always verify domain spelling before login, payment, or OTP actions.</li>
+                        <li>Do not trust urgent messages asking for password, OTP, or payment confirmation.</li>
+                        <li>Type important websites manually instead of opening unknown links.</li>
+                        <li>Use strong unique passwords with a password manager.</li>
+                        <li>Keep browser, OS, and security software updated regularly.</li>
+                    </ul>
+                </div>
+                <div class="guide-card">
+                    <h3>How To Raise A Complaint</h3>
+                    <ul>
+                        <li>Collect evidence: screenshot, full URL, message/email sender, and timestamp.</li>
+                        <li>Report to your bank/payment provider if money, card, or UPI details were shared.</li>
+                        <li>Report to your national cybercrime portal or local police cyber cell.</li>
+                        <li>In India, use cybercrime.gov.in and call 1930 for financial fraud support.</li>
+                        <li>Report phishing emails in your mail provider ("Report phishing") to block future attacks.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="history" id="history-section" style="display: none;">
+            <h2>Recent Scans</h2>
+            <ul class="history-list" id="history-list"></ul>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8000';
+        const DEFAULT_RECENT_HISTORY_TO_SHOW = 30;
+        let recentHistoryToShow = DEFAULT_RECENT_HISTORY_TO_SHOW;
+        // display logged-in user and provide logout
+        const currentUser = localStorage.getItem('username');
+        if (currentUser) {
+            document.addEventListener('DOMContentLoaded', () => {
+                const disp = document.getElementById('userDisplay');
+                if (disp) disp.textContent = currentUser;
+            });
+        }
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'logoutLink') {
+                localStorage.removeItem('username');
+                window.location.replace('login.html');
+            }
+        });
+        let scanHistory = [];
+        let stats = {
+            total: 0,
+            phishing: 0,
+            legitimate: 0
+        };
+
+        function loadHistorySettings() {
+            const savedRecent = parseInt(localStorage.getItem('recentHistoryToShow') || '', 10);
+
+            if (Number.isInteger(savedRecent) && savedRecent > 0) {
+                recentHistoryToShow = savedRecent;
+            }
+
+            const recentSelect = document.getElementById('recent-show-select');
+
+            if (recentSelect) {
+                recentSelect.value = String(recentHistoryToShow);
+            }
+        }
+
+        function saveHistorySettings() {
+            localStorage.setItem('recentHistoryToShow', String(recentHistoryToShow));
+        }
+
+        function setupHistoryControls() {
+            const recentSelect = document.getElementById('recent-show-select');
+
+            if (recentSelect) {
+                recentSelect.addEventListener('change', (e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (Number.isInteger(value) && value > 0) {
+                        recentHistoryToShow = value;
+                        saveHistorySettings();
+                        displayHistory();
+                    }
+                });
+            }
+        }
+
+        // Convert backend phishing probability into confidence for the predicted class.
+        function getPredictionConfidence(result) {
+            const raw = (result && typeof result.confidence === 'number') ? result.confidence : 0;
+            const phishingProb = Math.min(1, Math.max(0, raw));
+            return result && result.prediction_label === 'Phishing'
+                ? phishingProb
+                : (1 - phishingProb);
+        }
+        
+        // Load history and stats from localStorage
+        function loadFromStorage() {
+            const stored = localStorage.getItem('scanHistory');
+            if (stored) {
+                try {
+                    scanHistory = JSON.parse(stored);
+                    updateStats();
+                    displayHistory();
+                } catch (e) {
+                    console.error('Error loading history:', e);
+                }
+            }
+        }
+        
+        // Save to localStorage
+        function saveToStorage() {
+            localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+        }
+        
+        // Scan URL
+        async function scanURL() {
+            const urlInput = document.getElementById('url-input').value.trim();
+            const model = document.getElementById('model-select').value;
+            const errorDiv = document.getElementById('error-message');
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            
+            // Clear previous error
+            errorDiv.classList.remove('show');
+            errorDiv.textContent = '';
+            
+            if (!urlInput) {
+                showError('Please enter a URL');
+                return;
+            }
+            
+            // Validate URL format
+            if (!isValidURL(urlInput)) {
+                showError('Please enter a valid URL');
+                return;
+            }
+            
+            // Show loading
+            loadingDiv.style.display = 'block';
+            resultDiv.classList.remove('show');
+            
+            try {
+                // Ensure URL has protocol
+                let url = urlInput;
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+                
+                // Call API with timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                try {
+                    const response = await fetch(`${API_URL}/predict`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            url: url,
+                            model: model
+                        }),
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    let result;
+                    try {
+                        result = await response.json();
+                    } catch (e) {
+                        throw new Error(`Failed to parse API response: ${e.message}`);
+                    }
+                    
+                    // Check HTTP status first
+                    if (!response.ok && response.status >= 400) {
+                        throw new Error(`HTTP ${response.status}: ${result.detail || 'Request failed'}`);
+                    }
+                    
+                    // Check if response has required fields
+                    if (!result.prediction_label) {
+                        throw new Error('Invalid API response format');
+                    }
+                    
+                    displayResult(result);
+
+                    const displayConfidence = getPredictionConfidence(result);
+                    
+                    // Add to history
+                    scanHistory.unshift({
+                        url: result.url,
+                        prediction: result.prediction_label,
+                        confidence: displayConfidence,
+                        model: result.model_used,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    saveToStorage();
+                    updateStats();
+                    displayHistory();
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
+                    throw fetchError;
+                }
+                
+            } catch (error) {
+                console.error('Error details:', error);
+                let errorMsg = 'Failed to scan URL.';
+                
+                if (error.name === 'AbortError') {
+                    errorMsg = '⏱️ Request timeout. API server might be slow or not responding.';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMsg = '❌ Cannot connect to API server.<br>Run in terminal: <code>python main.py --run-api</code>';
+                } else if (error.message.includes('HTTP')) {
+                    errorMsg = '❌ API Error: ' + error.message;
+                } else if (error.message.includes('JSON')) {
+                    errorMsg = '❌ Invalid response from API. Server might not be running properly.';
+                } else {
+                    errorMsg = '❌ ' + (error.message || 'Unknown error occurred');
+                }
+                
+                showError(errorMsg);
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
+        
+        // Display result
+        function displayResult(result) {
+            const resultDiv = document.getElementById('result');
+            const icon = document.getElementById('result-icon');
+            const status = document.getElementById('result-status');
+            const description = document.getElementById('result-description');
+            const url = document.getElementById('result-url');
+            const prediction = document.getElementById('result-prediction');
+            const model = document.getElementById('result-model');
+            const confidence = document.getElementById('result-confidence');
+            
+            const isPhishing = result.prediction_label === 'Phishing';
+            const confidencePercent = (getPredictionConfidence(result) * 100).toFixed(2);
+            
+            // Update classes
+            resultDiv.classList.remove('phishing', 'legitimate');
+            resultDiv.classList.add(isPhishing ? 'phishing' : 'legitimate');
+            
+            // Update content
+            icon.textContent = isPhishing ? '⚠️' : '✅';
+            status.textContent = result.prediction_label;
+            description.textContent = isPhishing ? 
+                'This URL appears to be malicious. Proceed with caution!' : 
+                'This URL appears to be legitimate.';
+            
+            url.textContent = result.url;
+            prediction.textContent = result.prediction_label;
+            model.textContent = result.model_used;
+            confidence.textContent = confidencePercent + '%';
+            
+            // Update confidence bar
+            const confidenceFill = document.getElementById('confidence-fill');
+            const confidenceText = document.getElementById('confidence-text');
+            confidenceFill.style.width = confidencePercent + '%';
+            confidenceText.textContent = confidencePercent + '%';
+            
+            // Update features if available
+            const featuresSection = document.getElementById('features-section');
+            if (result.features && Object.keys(result.features).length > 0) {
+                const featuresList = document.getElementById('features-list');
+                featuresList.innerHTML = '';
+
+                // Show most important security signals first so they are never hidden.
+                const priorityKeys = [
+                    'attack_detection_modules',
+                    'detection_reasons',
+                    'ssl_certificate_valid',
+                    'blacklist_check',
+                    'domain_reputation_score',
+                    'brand_impersonation_detected',
+                    'tld_risk_score',
+                    'url_entropy',
+                    'redirect_count',
+                    'query_parameter_count',
+                    'digit_ratio'
+                ];
+
+                const featureEntries = Object.entries(result.features);
+                const prioritized = [];
+                const remaining = [];
+
+                featureEntries.forEach(([key, value]) => {
+                    if (priorityKeys.includes(key)) {
+                        prioritized.push([key, value]);
+                    } else {
+                        remaining.push([key, value]);
+                    }
+                });
+
+                prioritized.sort((a, b) => priorityKeys.indexOf(a[0]) - priorityKeys.indexOf(b[0]));
+
+                // Render more than 8 so advanced features are visible.
+                [...prioritized, ...remaining].slice(0, 20).forEach(([key, value]) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${formatFeatureName(key)}: ${formatFeatureValue(value)}`;
+                    featuresList.appendChild(li);
+                });
+                
+                featuresSection.style.display = 'block';
+            } else {
+                featuresSection.style.display = 'none';
+            }
+
+            renderTrustBreakdown(result);
+            renderAttackReplay(result);
+            
+            resultDiv.classList.add('show');
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(max, Math.max(min, value));
+        }
+
+        function buildTrustFactors(result) {
+            const features = result.features || {};
+            const confidence = typeof result.confidence === 'number' ? result.confidence : 0;
+            const isPhishing = result.prediction_label === 'Phishing';
+
+            const factors = [
+                {
+                    label: 'Model Signal',
+                    risk: isPhishing ? Math.round(confidence * 30) : Math.round((1 - confidence) * 20),
+                    reason: isPhishing
+                        ? `Model confidence is ${(confidence * 100).toFixed(1)}% for phishing.`
+                        : `Model confidence is ${(confidence * 100).toFixed(1)}% for legitimate behavior.`
+                },
+                {
+                    label: 'Blacklist Match',
+                    risk: features.blacklist_check ? 28 : 0,
+                    reason: features.blacklist_check
+                        ? 'Domain or keyword matched blacklist indicators.'
+                        : 'No blacklist indicator detected.'
+                },
+                {
+                    label: 'Brand Impersonation',
+                    risk: features.brand_impersonation_detected ? 22 : 0,
+                    reason: features.brand_impersonation_detected
+                        ? 'Potential brand impersonation pattern detected.'
+                        : 'No brand impersonation signal found.'
+                },
+                {
+                    label: 'SSL / HTTPS Trust',
+                    risk: features.ssl_certificate_valid === 0 ? 16 : 0,
+                    reason: features.ssl_certificate_valid === 0
+                        ? 'SSL/HTTPS trust signal is weak.'
+                        : 'SSL/HTTPS trust signal is good.'
+                },
+                {
+                    label: 'URL Obfuscation',
+                    risk: typeof features.url_entropy === 'number'
+                        ? Math.round(clamp((features.url_entropy - 3.5) * 8, 0, 16))
+                        : 0,
+                    reason: typeof features.url_entropy === 'number' && features.url_entropy > 4.2
+                        ? 'High URL entropy suggests obfuscation attempts.'
+                        : 'URL entropy is within expected range.'
+                },
+                {
+                    label: 'Redirect Behavior',
+                    risk: typeof features.redirect_count === 'number' ? Math.round(clamp(features.redirect_count * 4, 0, 12)) : 0,
+                    reason: typeof features.redirect_count === 'number' && features.redirect_count > 0
+                        ? `Detected ${features.redirect_count} redirect marker(s).`
+                        : 'No suspicious redirect markers found.'
+                },
+                {
+                    label: 'TLD Risk',
+                    risk: typeof features.tld_risk_score === 'number' ? Math.round(clamp(features.tld_risk_score * 0.2, 0, 12)) : 0,
+                    reason: typeof features.tld_risk_score === 'number'
+                        ? `TLD risk score is ${features.tld_risk_score}.`
+                        : 'No TLD risk score available.'
+                }
+            ];
+
+            return factors.map((factor) => ({
+                ...factor,
+                risk: clamp(factor.risk || 0, 0, 30)
+            }));
+        }
+
+        function renderTrustBreakdown(result) {
+            const panel = document.getElementById('trust-panel');
+            const scoreEl = document.getElementById('trust-score');
+            const summaryEl = document.getElementById('trust-summary');
+            const factorsEl = document.getElementById('trust-factors');
+            const reasonsEl = document.getElementById('trust-reasons');
+
+            const factors = buildTrustFactors(result);
+            const totalRisk = clamp(Math.round(factors.reduce((sum, f) => sum + f.risk, 0)), 0, 95);
+            const trustScore = 100 - totalRisk;
+
+            scoreEl.classList.remove('high', 'medium', 'low');
+            if (trustScore >= 70) {
+                scoreEl.classList.add('high');
+            } else if (trustScore >= 40) {
+                scoreEl.classList.add('medium');
+            } else {
+                scoreEl.classList.add('low');
+            }
+
+            scoreEl.textContent = `${trustScore} / 100`;
+            summaryEl.textContent = trustScore >= 70
+                ? 'This URL currently looks more trustworthy, but still apply normal security checks before sharing sensitive information.'
+                : trustScore >= 40
+                    ? 'This URL has mixed trust signals. Verify domain and purpose before interacting.'
+                    : 'This URL has strong risk indicators and should be treated as potentially dangerous.';
+
+            factorsEl.innerHTML = '';
+            factors.forEach((factor) => {
+                const row = document.createElement('div');
+                row.className = 'factor-row';
+                const pct = Math.round((factor.risk / 30) * 100);
+                row.innerHTML = `
+                    <span class="factor-label">${factor.label}</span>
+                    <div class="factor-track"><div class="factor-fill" style="width: ${pct}%"></div></div>
+                    <span class="factor-value">Risk ${factor.risk}</span>
+                `;
+                factorsEl.appendChild(row);
+            });
+
+            const topReasons = factors
+                .slice()
+                .sort((a, b) => b.risk - a.risk)
+                .slice(0, 3);
+
+            reasonsEl.innerHTML = '';
+            topReasons.forEach((item) => {
+                const li = document.createElement('li');
+                li.textContent = `${item.label}: ${item.reason}`;
+                reasonsEl.appendChild(li);
+            });
+
+            panel.classList.add('show');
+        }
+
+        function getReplaySteps(isPhishing) {
+            if (isPhishing) {
+                return [
+                    {
+                        stage: 'Entry Point',
+                        tone: 'warning',
+                        title: 'Victim opens fake trusted page',
+                        text: 'A spoofed login or payment page tricks the user by copying a known brand design.'
+                    },
+                    {
+                        stage: 'Credential Theft',
+                        tone: 'danger',
+                        title: 'Sensitive data is submitted',
+                        text: 'User enters password, OTP, card, or UPI data, which is captured by attackers.'
+                    },
+                    {
+                        stage: 'Account Abuse',
+                        tone: 'danger',
+                        title: 'Unauthorized actions begin',
+                        text: 'Attackers may reset passwords, drain wallets, or spread more phishing from hijacked accounts.'
+                    },
+                    {
+                        stage: 'Containment',
+                        tone: 'safe',
+                        title: 'Immediate recovery actions',
+                        text: 'Block cards, change passwords, enable 2FA, report to bank/provider, and file cyber complaint.'
+                    }
+                ];
+            }
+
+            return [
+                {
+                    stage: 'Verification',
+                    tone: 'safe',
+                    title: 'URL appears legitimate',
+                    text: 'The domain and indicators do not show immediate phishing behavior in this scan.'
+                },
+                {
+                    stage: 'Safe Practice',
+                    tone: 'safe',
+                    title: 'Continue with caution',
+                    text: 'Still avoid sharing OTP or passwords unless you independently trust the destination.'
+                },
+                {
+                    stage: 'Hardening',
+                    tone: 'safe',
+                    title: 'Keep protection active',
+                    text: 'Use 2FA, password manager, and browser updates to reduce future phishing risk.'
+                },
+                {
+                    stage: 'Monitoring',
+                    tone: 'warning',
+                    title: 'Report suspicious behavior quickly',
+                    text: 'If anything unusual appears later, report fast and rotate credentials immediately.'
+                }
+            ];
+        }
+
+        function renderAttackReplay(result) {
+            const replay = document.getElementById('attack-replay');
+            const subtitle = document.getElementById('replay-subtitle');
+            const riskChip = document.getElementById('replay-risk-chip');
+            const riskFill = document.getElementById('replay-track-fill');
+            const replaySteps = document.getElementById('replay-steps');
+
+            const isPhishing = result.prediction_label === 'Phishing';
+            const confidencePct = Math.round((result.confidence || 0) * 100);
+            const riskScore = isPhishing ? Math.max(confidencePct, 65) : Math.max(5, Math.min(35, 100 - confidencePct));
+
+            subtitle.textContent = isPhishing
+                ? 'This simulation shows how this detected phishing URL could impact a user if clicked.'
+                : 'This simulation shows the safer path and prevention mindset for a likely legitimate URL.';
+
+            riskChip.classList.remove('high', 'low');
+            riskChip.classList.add(isPhishing ? 'high' : 'low');
+            riskChip.textContent = `Risk Simulation: ${riskScore}%`;
+            riskFill.style.width = `${riskScore}%`;
+
+            const steps = getReplaySteps(isPhishing);
+            replaySteps.innerHTML = '';
+            steps.forEach((step, index) => {
+                const card = document.createElement('div');
+                card.className = 'replay-step';
+                card.style.animationDelay = `${index * 90}ms`;
+                card.innerHTML = `
+                    <span class="step-tag ${step.tone}">${step.stage}</span>
+                    <h4>${step.title}</h4>
+                    <p>${step.text}</p>
+                `;
+                replaySteps.appendChild(card);
+            });
+
+            replay.classList.add('show');
+        }
+        
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.classList.add('show');
+        }
+        
+        // Validate URL
+        function isValidURL(str) {
+            try {
+                let urlToTest = str;
+                
+                // Add protocol if missing for URL constructor
+                if (!urlToTest.startsWith('http://') && !urlToTest.startsWith('https://')) {
+                    urlToTest = 'https://' + urlToTest;
+                }
+                
+                // Create URL object to validate
+                const urlObj = new URL(urlToTest);
+                const hostname = urlObj.hostname;
+                
+                // Check if hostname is valid
+                if (!hostname || hostname.length === 0) {
+                    return false;
+                }
+
+                // ── IPv4 address check ──
+                // e.g. http://192.168.0.1/login  or  http://10.0.0.1:8080/verify
+                const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+                if (ipv4Regex.test(hostname)) {
+                    // Validate each octet is 0-255
+                    const octets = hostname.split('.');
+                    return octets.every(o => {
+                        const n = parseInt(o, 10);
+                        return n >= 0 && n <= 255;
+                    });
+                }
+
+                // ── IPv6 address check (browser wraps in []) ──
+                if (hostname.startsWith('[') && hostname.endsWith(']')) {
+                    return true; // IPv6 literal is structurally valid
+                }
+                
+                // Must have at least one dot (domain.extension)
+                if (!hostname.includes('.')) {
+                    return false;
+                }
+                
+                // Split by dots and check each part
+                const parts = hostname.split('.');
+                
+                // Must have at least 2 parts (e.g., example.com)
+                if (parts.length < 2) {
+                    return false;
+                }
+                
+                // Each part must have at least 1 character
+                if (parts.some(part => part.length === 0)) {
+                    return false;
+                }
+                
+                // Last part (TLD) must be at least 2 characters
+                if (parts[parts.length - 1].length < 2) {
+                    return false;
+                }
+                
+                // Validate each part contains only alphanumeric and hyphens
+                // Hyphens cannot be at start or end of a part
+                const partRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/;
+                if (!parts.every(part => partRegex.test(part))) {
+                    return false;
+                }
+                
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        // Format feature name
+        function formatFeatureName(name) {
+            return name
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        // Format feature value
+        function formatFeatureValue(value) {
+            if (typeof value === 'number') {
+                return value.toFixed(2);
+            }
+            if (Array.isArray(value) || (value && typeof value === 'object')) {
+                try {
+                    return JSON.stringify(value);
+                } catch (e) {
+                    return String(value);
+                }
+            }
+            return value;
+        }
+        
+        // Update stats
+        function updateStats() {
+            stats.total = scanHistory.length;
+            stats.phishing = scanHistory.filter(s => s.prediction === 'Phishing').length;
+            stats.legitimate = scanHistory.filter(s => s.prediction === 'Legitimate').length;
+            
+            if (stats.total > 0) {
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-phishing').textContent = stats.phishing;
+                document.getElementById('stat-legitimate').textContent = stats.legitimate;
+                document.getElementById('stats').style.display = 'grid';
+            }
+        }
+        
+        // Display history
+        function displayHistory() {
+            const historyList = document.getElementById('history-list');
+            const historySection = document.getElementById('history-section');
+            
+            if (scanHistory.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+            
+            historyList.innerHTML = '';
+            
+            scanHistory.slice(0, recentHistoryToShow).forEach(item => {
+                const li = document.createElement('li');
+                const isPhishing = item.prediction === 'Phishing';
+                li.className = `history-item ${isPhishing ? 'phishing' : 'legitimate'}`;
+                
+                const date = new Date(item.timestamp);
+                const timeStr = date.toLocaleString();
+                
+                li.innerHTML = `
+                    <div class="history-url">${item.url}</div>
+                    <div class="history-meta">
+                        ${item.prediction} • ${(item.confidence * 100).toFixed(1)}% • ${timeStr}
+                    </div>
+                `;
+                
+                li.onclick = () => {
+                    document.getElementById('url-input').value = item.url;
+                    scanURL();
+                };
+                
+                historyList.appendChild(li);
+            });
+            
+            historySection.style.display = 'block';
+        }
+        
+        // Allow Enter key to scan
+        document.getElementById('url-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                scanURL();
+            }
+        });
+        
+        // Check API health on page load
+        async function checkAPIHealth() {
+            try {
+                console.log('Checking API health...');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${API_URL}/health`, { 
+                    signal: controller.signal 
+                });
+                
+                clearTimeout(timeoutId);
+                console.log('API Health:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                // API is working
+                const healthData = await response.json();
+                console.log('API Status:', healthData);
+                
+            } catch (error) {
+                console.warn('API not accessible:', error.message);
+                const errorDiv = document.getElementById('error-message');
+                let msg = '⚠️ <strong>API Server Not Running</strong><br>';
+                msg += 'Open a new terminal and run:<br>';
+                msg += '<code style="background: #f0f0f0; padding: 5px;">python main.py --run-api</code>';
+                errorDiv.innerHTML = msg;
+                errorDiv.classList.add('show');
+            }
+        }
+        
+        // Load on page load
+        window.addEventListener('load', function() {
+            loadHistorySettings();
+            setupHistoryControls();
+            loadFromStorage();
+            updateStats();
+            displayHistory();
+            checkAPIHealth();
+        });
+    </script>
+</body>
+</html>
